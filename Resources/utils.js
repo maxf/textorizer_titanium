@@ -57,5 +57,7 @@ Pixmap.prototype.colorAverageAt = function( x, y, radius ) {
   return new Color(resultR/count, resultG/count, resultB/count, 1);
 };
 
-//################################################################################
+Pixmap.prototype.brightnessAverageAt = function(x, y, radius) {
+  return this.colorAverageAt(x,y,radius).brightness();
+}
 

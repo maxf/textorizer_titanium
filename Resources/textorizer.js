@@ -248,6 +248,7 @@ Textorizer[2] = new function() {
   // public
 
   this.textorize = function(params, openImageSeparately) {
+
     this._params = params;
     this.inputPixmap = new Pixmap(params['inputCanvas']);
     this._wiggleFrequency = this._params['wiggle']/100.0;
@@ -270,7 +271,7 @@ Textorizer[2] = new function() {
   this._P2S = function(x,y)
     // convert x,y from picture space to  "sinusoidal space"
   {
-    var c=cos(-this._params['theta']), s=sin(-this._params['theta']);
+    var c=Math.cos(-this._params['theta']), s=Math.sin(-this._params['theta']);
     var sx = 1/this._params['sx'], sy = 1/this._params['sy'];
     var tx = -this._params['tx'], ty = -this._params['ty'];
 
@@ -285,8 +286,8 @@ Textorizer[2] = new function() {
     return [x1-py-(px/20), y1+px-(py/20), x1+py-(px/20), y1-px-(py/20)];
   };
 
-
-  this._excoffize() = function() {
+  this._excoffize = function() {
+    var outputCanvas = this._params['outputCanvas'];
     var outputCtx = outputCanvas.getContext('2d');
     var inputWidth   = this.inputPixmap.width;
     var inputHeight  = this.inputPixmap.height;
@@ -322,10 +323,10 @@ Textorizer[2] = new function() {
     var corner3 = this._P2S(inputWidth,inputHeight);
     var corner4 = this._P2S(0,inputHeight);
 
-    var minX=min(corner1[0],corner2[0],corner3[0],corner4[0]);
-    var minY=min(corner1[1],corner2[1],corner3[1],corner4[1]);
-    var maxX=max(corner1[0],corner2[0],corner3[0],corner4[0]);
-    var maxY=max(corner1[1],corner2[1],corner3[1],corner4[1]);
+    var minX=Math.min(corner1[0],corner2[0],corner3[0],corner4[0]);
+    var minY=Math.min(corner1[1],corner2[1],corner3[1],corner4[1]);
+    var maxX=Math.max(corner1[0],corner2[0],corner3[0],corner4[0]);
+    var maxY=Math.max(corner1[1],corner2[1],corner3[1],corner4[1]);
 
     // from the min/max bounding box, we know which sines to draw
 
@@ -336,20 +337,23 @@ Textorizer[2] = new function() {
 
     for (y=minY-this._wiggleAmplitude ;y<maxY+this._wiggleAmplitude;y+=stepy) {
       for (x=minX;x<maxX;x+=stepx) {
-        var imageP=S2P(x,y+wiggle(x),params);
+        var imageP=this._S2P(x,y+this._wiggle(x),params);
         var rx=imageP[0];
         var ry=imageP[1];
 
         // rx2,ry2 is the point ahead, to which we draw a segment
-        var imageP2=S2P(x+stepx,y+wiggle(x+stepx),params);
+        var imageP2=this._S2P(x+stepx,y+this._wiggle(x+stepx),params);
         var rx2=imageP2[0];
         var ry2=imageP2[1];
 
         if ((rx  >= 0 && rx  < inputWidth && ry  >= 0 && ry  < inputHeight)||
             (rx2 >= 0 && rx2 < inputWidth && ry2 >= 0 && ry2 < inputHeight)) {
 
-          var radius=100/(10+this.inputPixmap.colorAverageAt(Math.floor(rx), Math.floor(ry), 1));
-          var radius2=100/(10+this.inputPixmap.colorAverageAt(Math.floor(rx2), Math.floor(ry2), 1));
+          var radius=100/(10+this.inputPixmap.brightnessAverageAt(Math.floor(rx), Math.floor(ry), 1));
+          var radius2=100/(10+this.inputPixmap.brightnessAverageAt(Math.floor(rx2), Math.floor(ry2), 1));
+
+//          console.log(rx+","+ry+" - "+rx2+","+ry2+" - "+radius);
+
 
           var sidePoints=this._sidePoints(rx,ry,rx2,ry2,radius);
           var sidePoints2=this._sidePoints(rx2,ry2,rx,ry,radius2);
@@ -370,7 +374,7 @@ Textorizer[2] = new function() {
     var r=(outerFrameWidth-innerFrameWidth)/2;
     outputCtx.strokeColor='white';
     outputCtx.strokeWidth = outerFrameWidth + innerFrameWidth;
-    outputCtx.strokeRect(-r,-r,InputWidth+2*r, InputHeight+2*r);
+    outputCtx.strokeRect(-r,-r,inputWidth+2*r, inputHeight+2*r);
   };
 
 };

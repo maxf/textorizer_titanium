@@ -286,7 +286,7 @@
                                step: .1,
                                value:defaults[2]["wiggle"],
                                slide: function(event, ui) {
-                                 $("#e_theta_value").text(ui.value);
+                                 $("#e_wiggle_value").text(ui.value);
                                }});
         $("#e_wiggle_value").text(defaults[2]["wiggle"]);
         $("#e_line_height").slider({min:1,
