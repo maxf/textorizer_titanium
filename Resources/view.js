@@ -32,7 +32,8 @@
           "sx":1,
           "sy":1,
           "tx":0,
-          "ty":0
+          "ty":0,
+          "output_height":450
         }];
 
 
@@ -81,7 +82,6 @@
         output_width_values[i].text(Math.floor(defaults[i]["output_height"]*aspectRatios[i]));
         output_height_values[i].text(Math.floor(defaults[i]["output_height"]));
       }
-
 
       var input_urls;
       var input_thumbs;
@@ -134,7 +134,8 @@
         texts = [$("#t1_text"), $("#t2_text"),$("#e_text")];
         opacities = [$("#t1_opacity"), $("#t2_opacity"), $("#e_opacity")];
         opacity_values = [$("#t1_opacity_value"), $("#t2_opacity_value"), $("#e_opacity_value")];
-        output_canvases = [$("#t1_output_canvas"), $("#t2_output_canvas"), $("#e_output_canvas")];
+        // no jquery on line below. We need the raw node values since we're operating on the attributes directly
+        output_canvases = [document.getElementById("t1_output_canvas"), document.getElementById("t2_output_canvas"), document.getElementById("e_output_canvas")];
         output_heights = [$("#t1_output_height"), $("#t2_output_height"), $("#e_output_height")];
         output_width_values = [$("#t1_output_width_value"), $("#t2_output_width_value"), $("#e_output_width_value")];
         output_height_values = [$("#t1_output_height_value"), $("#t2_output_height_value"), $("#e_output_height_value")];
@@ -186,7 +187,7 @@
                                opacity_values[2].text(ui.value);
                              }});
 
-        for (var i=0;i<2;i++) {
+        for (var i=0;i<=2;i++) {
           input_urls[i].val(defaults[i]["input_url"]);
           input_thumbs[i].attr("src",defaults[i]["input_url"]);
           opacity_values[i].text(defaults[i]["opacity"]);
@@ -356,13 +357,14 @@
           params["font_scale"] = $("#t2_font_scale").slider('value');
           params["font"] = $('#t2_font :selected').text();
           break;
-        case 1:
-          params["theta"] = $("#t2_theta").slider('value');
-          params["wiggle"] = $("#t2_wiggle").slider('value');
-          params["sx"] = $("#t2_sx").slider('value');
-          params["sy"] = $("#t2_sy").slider('value');
-          params["tx"] = $("#t2_tx").slider('value');
-          params["ty"] = $("#t2_ty").slider('value');
+        case 2:
+          params["theta"] = $("#e_theta").slider('value');
+          params["wiggle"] = $("#e_wiggle").slider('value');
+          params["line_height"] = $("#e_line_height").slider('value');
+          params["sx"] = $("#e_sx").slider('value');
+          params["sy"] = $("#e_sy").slider('value');
+          params["tx"] = $("#e_tx").slider('value');
+          params["ty"] = $("#e_ty").slider('value');
           break;
         }
         return params;

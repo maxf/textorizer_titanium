@@ -8,7 +8,6 @@ Textorizer[0] = new function() {
     this._params = params;
     this.inputPixmap = new Pixmap(params['inputCanvas']);
     this._textorize();
-
     if (openImageSeparately)
       window.open(this._params['outputCanvas'].toDataURL());
   };
@@ -243,61 +242,135 @@ Textorizer[1] = new function() {
   };
 };
 
-var Color = function(r,g,b,a) {
-  this.r = r;
-  this.g = g;
-  this.b = b;
-  this.a = a;
-};
-
-Color.prototype.toString = function() {
-  return "rgb("+Math.round(this.r)+","+Math.round(this.g)+","+Math.round(this.b)+")";
-}
-
-Color.prototype.isWhite = function() {
-  return this.r+this.g+this.b >= 3*255;
-}
-
-Color.prototype.brightness = function() {
-  return (this.r+this.g+this.b)/3;
-}
-
-
 //################################################################################
+Textorizer[2] = new function() {
 
-var Pixmap = function(canvas) {
-  this.canvas = canvas;
-  this.width = this.canvas.width;
-  this.height = this.canvas.height;
-  this.context = this.canvas.getContext('2d');
-  this._pixels = this.context.getImageData(0,0,this.canvas.width,this.canvas.height).data;
-}
+  // public
 
-Pixmap.prototype.colorAt = function(x,y) {
-  var index = 4*(x + this.width*y);
-  return new Color( this._pixels[index],
-                     this._pixels[index+1],
-                     this._pixels[index+2],
-                     this._pixels[index+3] );
-};
+  this.textorize = function(params, openImageSeparately) {
+    this._params = params;
+    this.inputPixmap = new Pixmap(params['inputCanvas']);
+    this._wiggleFrequency = this._params['wiggle']/100.0;
+    this._wiggleAmplitude = this._wiggleFrequency==0 ? 0 : .5/this._wiggleFrequency;
 
-//################################################################################
+    this._excoffize();
+    if (openImageSeparately)
+      window.open(this._params['outputCanvas'].toDataURL());
+  };
 
-Pixmap.prototype.colorAverageAt = function( x, y, radius ) {
-  var index;
-  var resultR=0.0, resultG=0.0, resultB=0.0;
-  var count=0;
+  // private
+  this._wiggle = function(x) { return this._wiggleAmplitude*Math.sin(x*this._wiggleFrequency); };
+  this._S2P = function(x,y) {
+    // convert x,y from "sinusoidal space" to picture space
+    var c=Math.cos(this._params['theta']), s=Math.sin(this._params['theta']);
+    var sx=this._params['sx'], sy=this._params['sy'];
+    var tx=this._params['tx'], ty=this._params['ty'];
+    return [x*sx*c - y*sy*s + sx*c*tx - sy*s*ty, x*sx*s + y*sy*c + sx*s*tx + sy*c*ty];
+  };
+  this._P2S = function(x,y)
+    // convert x,y from picture space to  "sinusoidal space"
+  {
+    var c=cos(-this._params['theta']), s=sin(-this._params['theta']);
+    var sx = 1/this._params['sx'], sy = 1/this._params['sy'];
+    var tx = -this._params['tx'], ty = -this._params['ty'];
 
-  for (var i=-radius; i<=radius; i++) {
-    for (var j=-radius; j<=radius; j++) {
-      if (x+i>=0 && x+i<this.width && y+j>=0 && y+j<this.height) {
-        count++;
-        index = 4*((x+i)+this.width*(y+j));
-        resultR+=this._pixels[index];
-        resultG+=this._pixels[index+1];
-        resultB+=this._pixels[index+2];
+    return [ x*sx*c - y*sx*s + tx, x*sy*s + y*sy*c + ty ];
+  };
+  this._sidePoints=function(x1,y1,x2,y2,r)
+  {
+    var L=Math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+    var px=(x2-x1)*r/L;
+    var py=(y2-y1)*r/L;
+
+    return [x1-py-(px/20), y1+px-(py/20), x1+py-(px/20), y1-px-(py/20)];
+  };
+
+
+  this._excoffize() = function() {
+    var outputCtx = outputCanvas.getContext('2d');
+    var inputWidth   = this.inputPixmap.width;
+    var inputHeight  = this.inputPixmap.height;
+    var outputWidth  = outputCanvas.width;
+    var outputHeight = outputCanvas.height;
+    var opacity      = this._params['opacity'];
+    var lineHeight   = this._params['line_height'];
+
+
+    // reset values
+    outputCtx.shadowColor="black";
+    outputCtx.shadowOffsetX=0;
+    outputCtx.shadowOffsetY=0;
+    outputCtx.shadowBlur=0;
+
+
+    // clear output canvas
+    outputCtx.fillStyle = "white";
+    outputCtx.fillRect(0,0,outputWidth,outputHeight);
+
+    // and add in the initial picture with transparency
+    outputCtx.globalAlpha = opacity/256;
+    outputCtx.drawImage(this.inputPixmap.canvas,0,0,outputWidth,outputHeight);
+    outputCtx.globalAlpha = 1;
+
+    // ready to draw
+    outputCtx.fillStyle='black';
+
+
+    // boundaries of the image in sinusoidal space
+    var corner1 = this._P2S(0,0);
+    var corner2 = this._P2S(inputWidth,0);
+    var corner3 = this._P2S(inputWidth,inputHeight);
+    var corner4 = this._P2S(0,inputHeight);
+
+    var minX=min(corner1[0],corner2[0],corner3[0],corner4[0]);
+    var minY=min(corner1[1],corner2[1],corner3[1],corner4[1]);
+    var maxX=max(corner1[0],corner2[0],corner3[0],corner4[0]);
+    var maxY=max(corner1[1],corner2[1],corner3[1],corner4[1]);
+
+    // from the min/max bounding box, we know which sines to draw
+
+    var stepx=2;
+    var stepy=lineHeight;
+
+    var x,y;
+
+    for (y=minY-this._wiggleAmplitude ;y<maxY+this._wiggleAmplitude;y+=stepy) {
+      for (x=minX;x<maxX;x+=stepx) {
+        var imageP=S2P(x,y+wiggle(x),params);
+        var rx=imageP[0];
+        var ry=imageP[1];
+
+        // rx2,ry2 is the point ahead, to which we draw a segment
+        var imageP2=S2P(x+stepx,y+wiggle(x+stepx),params);
+        var rx2=imageP2[0];
+        var ry2=imageP2[1];
+
+        if ((rx  >= 0 && rx  < inputWidth && ry  >= 0 && ry  < inputHeight)||
+            (rx2 >= 0 && rx2 < inputWidth && ry2 >= 0 && ry2 < inputHeight)) {
+
+          var radius=100/(10+this.inputPixmap.colorAverageAt(Math.floor(rx), Math.floor(ry), 1));
+          var radius2=100/(10+this.inputPixmap.colorAverageAt(Math.floor(rx2), Math.floor(ry2), 1));
+
+          var sidePoints=this._sidePoints(rx,ry,rx2,ry2,radius);
+          var sidePoints2=this._sidePoints(rx2,ry2,rx,ry,radius2);
+
+          outputCtx.beginPath();
+          outputCtx.moveTo(sidePoints[0],sidePoints[1]);
+          outputCtx.lineTo(sidePoints[2],sidePoints[3]);
+          outputCtx.lineTo(sidePoints2[0],sidePoints2[1]);
+          outputCtx.lineTo(sidePoints2[2],sidePoints2[3]);
+          outputCtx.fill();
+        }
       }
     }
-  }
-  return new Color(resultR/count, resultG/count, resultB/count, 1);
+
+    // framing rectangle. Should be a clipping path?
+    var outerFrameWidth=200;
+    var innerFrameWidth=2;
+    var r=(outerFrameWidth-innerFrameWidth)/2;
+    outputCtx.strokeColor='white';
+    outputCtx.strokeWidth = outerFrameWidth + innerFrameWidth;
+    outputCtx.strokeRect(-r,-r,InputWidth+2*r, InputHeight+2*r);
+  };
+
 };
