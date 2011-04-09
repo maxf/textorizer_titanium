@@ -352,11 +352,20 @@ Textorizer[2] = new function() {
           var radius=100/(10+this.inputPixmap.brightnessAverageAt(Math.floor(rx), Math.floor(ry), 1));
           var radius2=100/(10+this.inputPixmap.brightnessAverageAt(Math.floor(rx2), Math.floor(ry2), 1));
 
-//          console.log(rx+","+ry+" - "+rx2+","+ry2+" - "+radius);
-
-
           var sidePoints=this._sidePoints(rx,ry,rx2,ry2,radius);
           var sidePoints2=this._sidePoints(rx2,ry2,rx,ry,radius2);
+
+          // scale everything to output resolution
+          var zoom=outputWidth/inputWidth;
+          sidePoints[0]*=zoom;
+          sidePoints[1]*=zoom;
+          sidePoints[2]*=zoom;
+          sidePoints[3]*=zoom;
+          sidePoints2[0]*=zoom;
+          sidePoints2[1]*=zoom;
+          sidePoints2[2]*=zoom;
+          sidePoints2[3]*=zoom;
+
 
           outputCtx.beginPath();
           outputCtx.moveTo(sidePoints[0],sidePoints[1]);
@@ -368,13 +377,6 @@ Textorizer[2] = new function() {
       }
     }
 
-    // framing rectangle. Should be a clipping path?
-    var outerFrameWidth=200;
-    var innerFrameWidth=2;
-    var r=(outerFrameWidth-innerFrameWidth)/2;
-    outputCtx.strokeColor='white';
-    outputCtx.strokeWidth = outerFrameWidth + innerFrameWidth;
-    outputCtx.strokeRect(-r,-r,inputWidth+2*r, inputHeight+2*r);
   };
 
 };

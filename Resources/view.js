@@ -298,7 +298,7 @@
                                    }});
         $("#e_line_height_value").text(defaults[2]["theta"]);
         $("#e_sx").slider({min:0,
-                           max:10000,
+                           max:100,
                            step: 1,
                            value:defaults[2]["sx"],
                            slide: function(event, ui) {
@@ -306,7 +306,7 @@
                            }});
         $("#e_sx_value").text(defaults[2]["sx"]);
         $("#e_sy").slider({min:0,
-                           max:10000,
+                           max:100,
                            step: 1,
                            value:defaults[2]["sy"],
                            slide: function(event, ui) {
@@ -314,7 +314,7 @@
                            }});
         $("#e_sy_value").text(defaults[2]["sy"]);
         $("#e_tx").slider({min:0,
-                           max:10000,
+                           max:100,
                            step: 1,
                            value:defaults[2]["tx"],
                            slide: function(event, ui) {
@@ -322,7 +322,7 @@
                            }});
         $("#e_tx_value").text(defaults[2]["tx"]);
         $("#e_ty").slider({min:0,
-                           max:10000,
+                           max:100,
                            step: 1,
                            value:defaults[2]["ty"],
                            slide: function(event, ui) {
